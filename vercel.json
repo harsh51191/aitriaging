@@ -1,8 +1,23 @@
 {
   "version": 2,
+  "builds": [
+    {
+      "src": "api/*.js",
+      "use": "@vercel/node"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "/api/$1"
+    }
+  ],
   "functions": {
     "api/triage.js": {
       "maxDuration": 60
+    },
+    "api/health.js": {
+      "maxDuration": 10
     }
   },
   "env": {

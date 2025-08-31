@@ -8,7 +8,8 @@
     "dev": "node server.js",
     "start": "node server.js",
     "test-local": "node test-local.js",
-    "build": "echo 'No build step required'",
+    "build": "echo 'Building API functions...' && echo '✅ Build complete'",
+    "vercel-build": "echo 'Building API functions...' && echo '✅ Build complete'",
     "deploy": "vercel --prod"
   },
   "dependencies": {
