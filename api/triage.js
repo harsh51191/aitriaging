@@ -66,9 +66,17 @@ export default async function handler(req, res) {
   let issueKey = null;
   
   try {
+    // Log the complete request body
+    console.log('📥 RECEIVED REQUEST:');
+    console.log('Headers:', JSON.stringify(req.headers, null, 2));
+    console.log('Body:', JSON.stringify(req.body, null, 2));
+    console.log('Body length:', JSON.stringify(req.body).length);
+    console.log('---');
+    
     logger.logAction('WEBHOOK_RECEIVED', {
       contentLength: req.body ? JSON.stringify(req.body).length : 0,
-      headers: req.headers
+      headers: req.headers,
+      body: req.body  // Log the actual request body
     });
     
     const data = req.body;
@@ -80,7 +88,8 @@ export default async function handler(req, res) {
     
     logger.logAction('WEBHOOK_PARSED', {
       issueKey: issueKey,
-      webhookEvent: data.webhookEvent
+      webhookEvent: data.webhookEvent,
+      fullData: data  // Log the complete parsed data
     });
     
     // Process the ticket with full triage logic
@@ -311,32 +320,58 @@ Ensure all JSON fields are populated. Be specific and actionable in your insight
 // Gemini API call with triage
 async function callGeminiWithTriage(prompt, logger) {
   try {
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+    // Use REST API like the original Google Apps Script
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${process.env.GEMINI_API_KEY}`;
+    
+    const payload = {
+      contents: [{
+        parts: [{
+          text: prompt
+        }]
+      }],
+      generationConfig: {
+        temperature: 0.3,
+        maxOutputTokens: 2000,
+        candidateCount: 1
+      }
+    };
     
     const startTime = new Date();
-    const result = await model.generateContent(prompt);
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(payload)
+    });
     const responseTime = new Date() - startTime;
     
     logger.logAction('GEMINI_RESPONSE', {
       responseTime: responseTime,
-      hasContent: !!result.response
+      statusCode: response.status,
+      hasContent: response.ok
     });
     
-    if (result.response) {
-      const text = result.response.text();
-      const parsed = parseAIResponse(text);
+    if (response.ok) {
+      const result = await response.json();
       
-      if (parsed && parsed.scores) {
-        logger.logAction('GEMINI_PARSE_SUCCESS', {
-          recommendation: parsed.priority_recommendation,
-          score: parsed.scores.overall_priority
-        });
-        return parsed;
+      if (result.candidates && result.candidates[0] && result.candidates[0].content) {
+        const text = result.candidates[0].content.parts[0].text;
+        const parsed = parseAIResponse(text);
+        
+        if (parsed && parsed.scores) {
+          logger.logAction('GEMINI_PARSE_SUCCESS', {
+            recommendation: parsed.priority_recommendation,
+            score: parsed.scores.overall_priority
+          });
+          return parsed;
+        }
       }
     }
     
     logger.logAction('GEMINI_FAILED', {
-      response: result.response ? 'No valid content' : 'No response'
+      statusCode: response.status,
+      response: response.statusText
     });
     return null;
     
