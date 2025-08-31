@@ -311,7 +311,7 @@ Ensure all JSON fields are populated. Be specific and actionable in your insight
 // Gemini API call with triage
 async function callGeminiWithTriage(prompt, logger) {
   try {
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-exp' });
+    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
     
     const startTime = new Date();
     const result = await model.generateContent(prompt);
@@ -349,6 +349,16 @@ async function callGeminiWithTriage(prompt, logger) {
 // Claude API call with triage (fallback)
 async function callClaudeWithTriage(prompt, logger) {
   try {
+    // Check if anthropic is properly imported
+    if (!anthropic || !anthropic.messages) {
+      logger.logAction('CLAUDE_IMPORT_ERROR', { 
+        error: 'Anthropic SDK not properly imported',
+        anthropicType: typeof anthropic,
+        hasMessages: !!anthropic?.messages
+      });
+      return null;
+    }
+    
     const startTime = new Date();
     const response = await anthropic.messages.create({
       model: 'claude-3-5-sonnet-20241022',
@@ -389,36 +399,47 @@ async function callClaudeWithTriage(prompt, logger) {
 // Parse AI response
 export function parseAIResponse(text) {
   try {
+    console.log('🔍 Raw AI Response:', text.substring(0, 500));
+    
     // Extract JSON from response (handles markdown code blocks)
     let jsonStr = text;
     
     if (text.includes('```json')) {
       jsonStr = text.split('```json')[1].split('```')[0];
+      console.log('📝 Extracted JSON from markdown code block');
     } else if (text.includes('```')) {
       jsonStr = text.split('```')[1].split('```')[0];
+      console.log('📝 Extracted JSON from code block');
+    } else {
+      console.log('📝 Using raw text as JSON');
     }
     
     // Clean up the string
     jsonStr = jsonStr.trim();
+    console.log('🧹 Cleaned JSON string:', jsonStr.substring(0, 200));
     
     // Parse JSON
     const parsed = JSON.parse(jsonStr);
+    console.log('✅ JSON parsing successful');
     
     // Validate required fields
     if (!parsed.scores || !parsed.priority_recommendation) {
-      console.error('Missing required fields in AI response');
+      console.error('❌ Missing required fields in AI response');
+      console.error('Available fields:', Object.keys(parsed));
       return null;
     }
     
     // Calculate overall priority if missing
     if (!parsed.scores.overall_priority) {
       parsed.scores.overall_priority = calculateOverallPriority(parsed.scores);
+      console.log('🧮 Calculated missing overall priority:', parsed.scores.overall_priority);
     }
     
     return parsed;
     
   } catch (error) {
-    console.error('Error parsing AI response:', error, 'Text:', text.substring(0, 500));
+    console.error('❌ Error parsing AI response:', error.message);
+    console.error('🔍 Raw text that failed to parse:', text.substring(0, 1000));
     return null;
   }
 }
