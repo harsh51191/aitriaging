@@ -1,0 +1,35 @@
+{
+  "name": "jira-triage-api",
+  "version": "1.0.0",
+  "description": "AI-powered Jira ticket triage system with Gemini and Claude fallback",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "dev": "node server.js",
+    "start": "node server.js",
+    "test-local": "node test-local.js",
+    "build": "echo 'No build step required'",
+    "deploy": "vercel --prod"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.6.0",
+    "@google/generative-ai": "^0.1.1",
+    "express": "^4.21.2"
+  },
+  "devDependencies": {
+    "vercel": "^32.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "keywords": [
+    "jira",
+    "ai",
+    "triage",
+    "gemini",
+    "claude",
+    "vercel"
+  ],
+  "author": "Your Name",
+  "license": "MIT"
+}
