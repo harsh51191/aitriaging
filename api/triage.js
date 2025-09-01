@@ -163,19 +163,19 @@ export default async function handler(req, res) {
       issueKey: issueKey,
       result: {
         // Maintain backward compatibility
-        modelUsed: `${themeResult.modelUsed} (Theme) + ${analysisResult.modelUsed} (Priority)`,
+        modelUsed: `${result.themeModel || 'Unknown'} (Theme) + ${result.analysis?.modelUsed || 'Unknown'} (Priority)`,
         responseTime: result.responseTime,
         analysis: result.analysis,
         actions: result.actions,
         
         // New fields (additive, not breaking)
         theme: result.theme,
-        themeModel: themeResult.modelUsed,
-        priorityModel: analysisResult.modelUsed,
+        themeModel: result.themeModel,
+        priorityModel: result.analysis?.modelUsed,
         modelSummary: {
-          themeClassification: themeResult.modelUsed,
-          priorityAnalysis: analysisResult.modelUsed,
-          fallbackUsed: themeResult.modelUsed !== analysisResult.modelUsed
+          themeClassification: result.themeModel,
+          priorityAnalysis: result.analysis?.modelUsed,
+          fallbackUsed: result.themeModel !== result.analysis?.modelUsed
         },
         
         // Detailed analysis (maintaining all original fields)
@@ -186,7 +186,8 @@ export default async function handler(req, res) {
         opportunities: result.analysis?.opportunities || [],
         similar_features: result.analysis?.similar_features || 'Not analyzed',
         recommended_next_steps: result.analysis?.recommended_next_steps || [],
-        executive_summary: result.analysis?.executive_summary || 'Not analyzed'
+        executive_summary: result.analysis?.executive_summary || 'Not analyzed',
+        on_hold_reasoning: result.analysis?.on_hold_reasoning || 'Not applicable'
       },
       processingTime: processingTime
     });
@@ -209,6 +210,7 @@ async function processTicketWithFullTriage(issueKey, logger, issueData = null) {
     responseTime: 0,
     analysis: null,
     theme: null,
+    themeModel: null,
     actions: []
   };
   
@@ -239,6 +241,7 @@ async function processTicketWithFullTriage(issueKey, logger, issueData = null) {
     const theme = themeResult.theme;
     const themeTime = new Date() - themeStartTime;
     result.theme = theme;
+    result.themeModel = themeResult.modelUsed;
     result.modelUsed = themeResult.modelUsed;
     result.actions.push(`Theme classified: ${theme} (${themeTime}ms)`);
     logger.logAction('THEME_CLASSIFICATION_COMPLETE', { theme: theme, time: themeTime });
@@ -257,21 +260,22 @@ async function processTicketWithFullTriage(issueKey, logger, issueData = null) {
       logger.logAction('PRIORITY_ANALYSIS_SUCCESS', {
         recommendation: analysis.priority_recommendation,
         score: analysis.scores.overall_priority,
-        time: priorityTime
+        model: analysisResult.modelUsed
       });
     } else {
-      logger.logAction('PRIORITY_ANALYSIS_FAILED');
       result.actions.push('Priority analysis failed - manual review needed');
+      logger.logAction('PRIORITY_ANALYSIS_FAILED');
     }
     
-    const totalTime = new Date() - themeStartTime;
-    result.responseTime = totalTime;
+    // Calculate total response time
+    result.responseTime = themeTime + priorityTime;
     
     return result;
     
   } catch (error) {
-    logger.logAction('PROCESS_ERROR', { error: error.toString() });
-    throw error;
+    logger.logAction('ERROR', { error: error.toString() });
+    result.actions.push(`Error: ${error.toString()}`);
+    return result;
   }
 }
 
