@@ -498,8 +498,8 @@ async function callClaudeWithTriage(prompt, logger) {
     const startTime = new Date();
     const response = await anthropic.messages.create({
       model: 'claude-3-5-sonnet-20241022',
-      max_tokens: 2000,
-      temperature: 0.3,
+      max_tokens: 10000, // Increased from 1500 to handle full JSON
+      temperature: 0.2,
       messages: [{ role: 'user', content: prompt }]
     });
     const responseTime = new Date() - startTime;
@@ -553,6 +553,30 @@ export function parseAIResponse(text) {
     // Clean up the string
     jsonStr = jsonStr.trim();
     console.log('🧹 Cleaned JSON string:', jsonStr.substring(0, 200));
+    
+    // Check if JSON is complete (has closing braces)
+    const openBraces = (jsonStr.match(/\{/g) || []).length;
+    const closeBraces = (jsonStr.match(/\}/g) || []).length;
+    
+    if (openBraces > closeBraces) {
+      console.log('⚠️ Incomplete JSON detected, attempting to complete...');
+      
+      // Try to find the last complete object
+      let lastCompleteIndex = jsonStr.lastIndexOf('}');
+      if (lastCompleteIndex > 0) {
+        // Find the matching opening brace
+        let braceCount = 1;
+        for (let i = lastCompleteIndex - 1; i >= 0; i--) {
+          if (jsonStr[i] === '}') braceCount++;
+          if (jsonStr[i] === '{') braceCount--;
+          if (braceCount === 0) {
+            jsonStr = jsonStr.substring(0, lastCompleteIndex + 1);
+            console.log('🔧 Completed JSON by finding matching braces');
+            break;
+          }
+        }
+      }
+    }
     
     // Parse JSON
     const parsed = JSON.parse(jsonStr);
@@ -1348,7 +1372,7 @@ REQUIRED OUTPUT FORMAT (JSON):
         
         const response = await anthropic.messages.create({
           model: 'claude-3-5-sonnet-20241022',
-          max_tokens: 1500,
+          max_tokens: 3000, // Increased from 1500 to handle full JSON
           temperature: 0.2,
           messages: [{ role: 'user', content: prompt }]
         });
