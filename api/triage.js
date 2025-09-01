@@ -554,7 +554,7 @@ export function parseAIResponse(text) {
     jsonStr = jsonStr.trim();
     console.log('🧹 Cleaned JSON string:', jsonStr.substring(0, 200));
     
-    // Check if JSON is complete (has closing braces)
+    // Check if JSON is complete (has closing braces) BEFORE trying to parse
     const openBraces = (jsonStr.match(/\{/g) || []).length;
     const closeBraces = (jsonStr.match(/\}/g) || []).length;
     
@@ -588,7 +588,7 @@ export function parseAIResponse(text) {
       }
     }
     
-    // Parse JSON
+    // Now try to parse the (potentially completed) JSON
     const parsed = JSON.parse(jsonStr);
     console.log('✅ JSON parsing successful');
     
@@ -642,6 +642,46 @@ export function parseAIResponse(text) {
   } catch (error) {
     console.error('❌ Error parsing AI response:', error.message);
     console.error('🔍 Raw text that failed to parse:', text.substring(0, 1000));
+    
+    // Last resort: try to extract basic fields from the raw text
+    console.log('🔄 Attempting emergency field extraction from raw text...');
+    
+    try {
+      // Look for basic patterns in the raw text
+      const businessImpactMatch = text.match(/"business_impact":\s*(\d+)/);
+      const priorityMatch = text.match(/"priority_recommendation":\s*"([^"]+)"/);
+      const effortMatch = text.match(/"effort_size":\s*"([^"]+)"/);
+      
+      if (businessImpactMatch && priorityMatch) {
+        const emergencyResponse = {
+          scores: {
+            business_impact: parseInt(businessImpactMatch[1]),
+            effort_size: effortMatch ? effortMatch[1] : 'M',
+            effort_score: effortMatch && effortMatch[1] === 'M' ? 60 : 50,
+            overall_priority: parseInt(businessImpactMatch[1]) * 0.7
+          },
+          priority_recommendation: priorityMatch[1],
+          key_insights: ['Emergency extraction from raw text due to parsing failure'],
+          risks: ['Unable to assess risks due to parsing failure'],
+          opportunities: ['Unable to assess opportunities due to parsing failure'],
+          similar_features: 'Emergency extraction - manual review needed',
+          recommended_next_steps: ['Manual review required due to parsing failure'],
+          executive_summary: 'Priority analysis completed but required emergency text extraction. Manual review strongly recommended.',
+          on_hold_reasoning: 'Not applicable',
+          effort_analysis: {
+            estimated_effort: effortMatch ? effortMatch[1] : 'M',
+            reasoning: 'Emergency extraction from raw text',
+            confidence: 'Very Low (Emergency Extraction)'
+          }
+        };
+        
+        console.log('✅ Emergency extraction successful');
+        return emergencyResponse;
+      }
+    } catch (emergencyError) {
+      console.error('❌ Emergency extraction also failed:', emergencyError.message);
+    }
+    
     return null;
   }
 }
