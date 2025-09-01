@@ -561,20 +561,30 @@ export function parseAIResponse(text) {
     if (openBraces > closeBraces) {
       console.log('⚠️ Incomplete JSON detected, attempting to complete...');
       
-      // Try to find the last complete object
-      let lastCompleteIndex = jsonStr.lastIndexOf('}');
-      if (lastCompleteIndex > 0) {
-        // Find the matching opening brace
-        let braceCount = 1;
-        for (let i = lastCompleteIndex - 1; i >= 0; i--) {
-          if (jsonStr[i] === '}') braceCount++;
-          if (jsonStr[i] === '{') braceCount--;
+      // Find the last complete JSON object by looking for the outermost closing brace
+      let braceCount = 0;
+      let startIndex = -1;
+      let endIndex = -1;
+      
+      for (let i = 0; i < jsonStr.length; i++) {
+        if (jsonStr[i] === '{') {
+          if (braceCount === 0) startIndex = i;
+          braceCount++;
+        } else if (jsonStr[i] === '}') {
+          braceCount--;
           if (braceCount === 0) {
-            jsonStr = jsonStr.substring(0, lastCompleteIndex + 1);
-            console.log('🔧 Completed JSON by finding matching braces');
+            endIndex = i;
             break;
           }
         }
+      }
+      
+      if (startIndex !== -1 && endIndex !== -1) {
+        jsonStr = jsonStr.substring(startIndex, endIndex + 1);
+        console.log('🔧 Completed JSON by finding outermost object');
+        console.log('📏 JSON length after completion:', jsonStr.length);
+      } else {
+        console.log('❌ Could not find complete JSON object');
       }
     }
     
@@ -586,6 +596,38 @@ export function parseAIResponse(text) {
     if (!parsed.scores || !parsed.priority_recommendation) {
       console.error('❌ Missing required fields in AI response');
       console.error('Available fields:', Object.keys(parsed));
+      
+      // Try to extract what we can from incomplete response
+      if (parsed.scores && parsed.scores.business_impact) {
+        console.log('🔄 Attempting to create minimal valid response from incomplete data...');
+        
+        // Create a minimal but valid response
+        const minimalResponse = {
+          scores: {
+            business_impact: parsed.scores.business_impact || 0,
+            effort_size: parsed.scores.effort_size || 'M',
+            effort_score: parsed.scores.effort_score || 60,
+            overall_priority: parsed.scores.overall_priority || 50
+          },
+          priority_recommendation: parsed.priority_recommendation || 'Standard',
+          key_insights: parsed.key_insights || ['Analysis incomplete due to response truncation'],
+          risks: parsed.risks || ['Unable to assess risks due to incomplete response'],
+          opportunities: parsed.opportunities || ['Unable to assess opportunities due to incomplete response'],
+          similar_features: parsed.similar_features || 'Analysis incomplete',
+          recommended_next_steps: parsed.recommended_next_steps || ['Review complete response manually'],
+          executive_summary: parsed.executive_summary || 'Priority analysis completed but response was truncated. Manual review recommended.',
+          on_hold_reasoning: parsed.on_hold_reasoning || 'Not applicable',
+          effort_analysis: parsed.effort_analysis || {
+            estimated_effort: parsed.scores?.effort_size || 'M',
+            reasoning: 'Analysis incomplete',
+            confidence: 'Low (Truncated Response)'
+          }
+        };
+        
+        console.log('✅ Created minimal response from incomplete data');
+        return minimalResponse;
+      }
+      
       return null;
     }
     
