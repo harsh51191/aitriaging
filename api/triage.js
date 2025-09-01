@@ -183,7 +183,7 @@ export default async function handler(req, res) {
       issueKey: issueKey,
       result: {
         // Maintain backward compatibility
-        modelUsed: `${result.themeModel || 'Unknown'} (Theme) + ${result.analysis?.modelUsed || 'Unknown'} (Priority)`,
+        modelUsed: `${result.themeModel || 'Unknown'} (Theme) + ${result.priorityModel || 'Unknown'} (Priority)`,
         responseTime: result.responseTime,
         analysis: result.analysis,
         actions: result.actions,
@@ -274,7 +274,7 @@ async function processTicketWithFullTriage(issueKey, logger, issueData = null) {
     const priorityTime = new Date() - priorityStartTime;
     
     if (analysis && analysis.scores) {
-      result.modelUsed = analysisResult.modelUsed;
+      result.priorityModel = analysisResult.modelUsed; // Store priority model separately
       result.analysis = analysis;
       result.actions.push(`Priority analysis completed (${priorityTime}ms)`);
       logger.logAction('PRIORITY_ANALYSIS_SUCCESS', {
@@ -283,6 +283,7 @@ async function processTicketWithFullTriage(issueKey, logger, issueData = null) {
         model: analysisResult.modelUsed
       });
     } else {
+      result.priorityModel = "Failed"; // Mark priority as failed
       result.actions.push('Priority analysis failed - manual review needed');
       logger.logAction('PRIORITY_ANALYSIS_FAILED');
     }
@@ -1343,14 +1344,32 @@ REQUIRED OUTPUT FORMAT (JSON):
     // Fallback to Claude
     if (anthropic) {
       try {
+        logger.logAction('PRIORITY_CLAUDE_ATTEMPT', { promptLength: prompt.length });
+        
         const response = await anthropic.messages.create({
           model: 'claude-3-5-sonnet-20241022',
           max_tokens: 1500,
           temperature: 0.2,
           messages: [{ role: 'user', content: prompt }]
         });
+        
         const text = response.content[0].text;
+        
+        logger.logAction('PRIORITY_CLAUDE_RESPONSE', { 
+          responseLength: text.length,
+          responsePreview: text.substring(0, 200),
+          hasContent: !!text
+        });
+        
         const parsed = parseAIResponse(text);
+        
+        logger.logAction('PRIORITY_CLAUDE_PARSE_RESULT', { 
+          parsed: !!parsed,
+          hasScores: !!(parsed && parsed.scores),
+          parseResult: parsed ? Object.keys(parsed) : null,
+          rawResponse: text.substring(0, 500) // Log the actual response
+        });
+        
         if (parsed && parsed.scores) {
           modelUsed = 'Claude Sonnet 3.5';
           logger.logAction('PRIORITY_ANALYSIS_SUCCESS', { 
@@ -1359,6 +1378,12 @@ REQUIRED OUTPUT FORMAT (JSON):
             model: modelUsed
           });
           return { analysis: parsed, modelUsed };
+        } else {
+          logger.logAction('PRIORITY_CLAUDE_PARSE_FAILED', { 
+            reason: 'Parsed result missing scores',
+            parsed: parsed,
+            rawResponse: text.substring(0, 500)
+          });
         }
       } catch (claudeError) {
         logger.logAction('PRIORITY_CLAUDE_FAILED', { error: claudeError.toString() });
