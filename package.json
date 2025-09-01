@@ -1,5 +1,5 @@
 {
-  "name": "jira-triage-api",
+  "name": "jira-triage",
   "version": "1.0.0",
   "description": "AI-powered Jira ticket triage system with Gemini and Claude fallback",
   "main": "api/triage.js",
@@ -11,9 +11,8 @@
     "deploy": "vercel --prod"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.6.0",
     "@google/generative-ai": "^0.1.1",
-    "express": "^4.21.2"
+    "@anthropic-ai/sdk": "^0.24.0"
   },
   "devDependencies": {
     "vercel": "^32.0.0"

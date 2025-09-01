@@ -1,0 +1,129 @@
+{
+  "products": {
+    "Khoros Aurora Community": {
+      "overview": "Khoros Aurora is designed as a unified platform for digital engagement, particularly focusing on Community & Knowledge Management (CKM), built to address the evolving demands of enterprise buyers in a crowded and converging market. It represents a strategic shift from siloed tools to an integrated engagement ecosystem, positioning Khoros to lead in a consolidating market.",
+      "corePillars": [
+        "Community Engagement: Peer-to-peer support, product feedback and ideation, gamification, and loyalty programs, fostering trusted environments for onboarding, retention, and advocacy",
+        "Digital Care: Unified agent workspace across messaging, social, and owned channels, featuring smart routing, workflow automation, and AI assistance for cost-effective, scalable asynchronous customer experience (CX)",
+        "Social Media Management: Publishing, moderation, campaign execution, social listening, crisis response, analytics, and governance across global social footprints"
+      ],
+      "keyCapabilities": [
+        "Unified Platform Approach: Khoros integrates community content, curated knowledge, and agent workflows into a single, scalable platform, replacing piecemeal tools with a unified engagement suite",
+        "Enterprise-Ready Architecture: Multi-brand & multi-community management, role-based access & permissions, compliance & security (SOC 2 Type II, GDPR, CCPA)",
+        "Aurora AI Advantage: Contextual moderation, smart search & content discovery, knowledge routing & recommendations, intelligent content surfacing",
+        "Community Feature Depth: Advanced moderation tools, structured ideation, gamification & incentives, reputation & trust systems",
+        "Knowledge + Support Integration: Peer-to-agent escalation, CRM & care integration",
+        "Customization & Extensibility: Flexible theming & brand control, developer tools & SDK, open APIs & integrations, widgets & embeddable content"
+      ],
+      "themes": [
+        "ANALYTICS & REPORTING - AI-Powered Analytics",
+        "ANALYTICS & REPORTING - Core Analytics",
+        "ANALYTICS & REPORTING - REVIEW",
+        "ANALYTICS & REPORTING - Reporting Enhancements",
+        "COMMUNITY FEATURES & ENGAGEMENT -",
+        "COMMUNITY FEATURES & ENGAGEMENT - ACCEPTED",
+        "CONTENT MANAGEMENT & MODERATION - Content Controls",
+        "CONTENT MANAGEMENT & MODERATION - Moderation Features",
+        "CONTENT MANAGEMENT & MODERATION - REVIEW",
+        "CONTENT MANAGEMENT & MODERATION - Spam & Security Controls",
+        "INTEGRATION & PUBLISHING - Calendar - IN REVIEW",
+        "INTEGRATION & PUBLISHING - Events & Calendar",
+        "INTEGRATION & PUBLISHING - Other Integrations",
+        "INTEGRATION & PUBLISHING - Social Media Integration",
+        "PLATFORM ADMINISTRATION - - ACCEPTED",
+        "PLATFORM ADMINISTRATION - Admin Tools",
+        "PLATFORM ADMINISTRATION - Infrastructure & Security",
+        "SEARCH & DISCOVERY - Content Discovery",
+        "SEARCH & DISCOVERY - REVIEW",
+        "SEARCH & DISCOVERY - Search Functionality",
+        "USER EXPERIENCE & INTERFACE - - IN REVIEW",
+        "USER EXPERIENCE & INTERFACE - Communication Customization",
+        "USER EXPERIENCE & INTERFACE - Navigation & Layout",
+        "USER EXPERIENCE & INTERFACE - TRANSFERRED",
+        "USER EXPERIENCE & INTERFACE - UI Components & Widgets",
+        "USER EXPERIENCE & INTERFACE - Visual Design",
+        "USER EXPERIENCE & INTERFACE - category nodes - ACCEPTED",
+        "USER EXPERIENCE & INTERFACE - marketplace - IN REVIEW"
+      ],
+      "businessContext": "Enterprise B2B SaaS platform serving Fortune 500 companies, government agencies, and major brands. Focuses on reducing support costs through community-driven self-service and knowledge management.",
+      "technicalContext": "Built on modern architecture with AI integration, multi-tenant support, and extensive customization options through SDK and APIs."
+    },
+    "Khoros Care": {
+      "overview": "Khoros Care provides unified customer care across messaging, social, and owned channels with AI-powered assistance and workflow automation.",
+      "corePillars": [
+        "Agent Productivity: Unified workspace, smart routing, workflow automation",
+        "AI Assistance: Intelligent responses, automated workflows, predictive analytics",
+        "Multi-Channel Support: Messaging, social media, email, chat integration"
+      ],
+      "keyCapabilities": [
+        "Unified Agent Workspace: Single interface for all customer interactions",
+        "Smart Routing: AI-powered ticket assignment and escalation",
+        "Workflow Automation: Automated responses and process optimization",
+        "AI Assistance: Intelligent suggestions and automated workflows"
+      ],
+      "themes": [
+        "AGENT PRODUCTIVITY & USER EXPERIENCE -",
+        "AGENT PRODUCTIVITY & USER EXPERIENCE - - UNDER REVIEW",
+        "AGENT PRODUCTIVITY & USER EXPERIENCE - Platform Stability (ONE Items)",
+        "AGENT PRODUCTIVITY & USER EXPERIENCE - REVIEW",
+        "AGENT PRODUCTIVITY & USER EXPERIENCE - UNDER REVIEW",
+        "AGENT PRODUCTIVITY & USER EXPERIENCE - items - NEW",
+        "AGENT PRODUCTIVITY & USER EXPERIENCE - panel - UNDER REVIEW",
+        "AI, AUTOMATION & INTELLIGENT FEATURES -",
+        "AI, AUTOMATION & INTELLIGENT FEATURES - ROADMAP REVIEW",
+        "AI, AUTOMATION & INTELLIGENT FEATURES - UNDER REVIEW",
+        "ANALYTICS & REPORTING -",
+        "ANALYTICS & REPORTING - Permissions - LIKELY CARE - UNDER REVIEW",
+        "ANALYTICS & REPORTING - UNDER REVIEW",
+        "ANALYTICS & REPORTING - Widget - UNDER REVIEW",
+        "CHANNEL INTEGRATION & EXPANSION - App Store Integrations",
+        "CHANNEL INTEGRATION & EXPANSION - Bluesky (Twitter Replacement)",
+        "CHANNEL INTEGRATION & EXPANSION - CARE - UNDER REVIEW",
+        "CHANNEL INTEGRATION & EXPANSION - Facebook Updates",
+        "CHANNEL INTEGRATION & EXPANSION - LinkedIn Enhancements",
+        "CHANNEL INTEGRATION & EXPANSION - REVIEW",
+        "CHANNEL INTEGRATION & EXPANSION - SMS & Messaging Platforms",
+        "CHANNEL INTEGRATION & EXPANSION - Third-Party Integrations",
+        "CHANNEL INTEGRATION & EXPANSION - TikTok Suite",
+        "COMPLIANCE, SECURITY & AUTHENTICATION -",
+        "CONFIGURATION & SYSTEM MANAGEMENT -",
+        "CONFIGURATION & SYSTEM MANAGEMENT - - LIKELY CARE - UNDER REVIEW",
+        "CONFIGURATION & SYSTEM MANAGEMENT - CARE - UNDER REVIEW",
+        "CONFIGURATION & SYSTEM MANAGEMENT - REVIEW",
+        "PLATFORM & COMMUNITY FEATURES -",
+        "PLATFORM & COMMUNITY FEATURES - REVIEW",
+        "PLATFORM & COMMUNITY FEATURES - UNDER REVIEW"
+      ],
+      "businessContext": "Enterprise customer care platform focused on reducing response times and improving customer satisfaction through AI and automation.",
+      "technicalContext": "Modern cloud platform with AI integration, extensive API support, and enterprise-grade security."
+    },
+    "Khoros Social Media & Marketing": {
+      "overview": "Khoros Social Media & Marketing platform provides comprehensive social media management, campaign execution, and analytics across global social footprints.",
+      "corePillars": [
+        "Social Publishing: Multi-platform content creation and scheduling",
+        "Campaign Management: Campaign execution, monitoring, and optimization",
+        "Analytics & Reporting: Performance metrics and ROI measurement"
+      ],
+      "keyCapabilities": [
+        "Multi-Platform Publishing: Support for major social media platforms",
+        "Campaign Execution: End-to-end campaign management and optimization",
+        "Social Listening: Brand monitoring and crisis response",
+        "Analytics: Comprehensive reporting and performance metrics"
+      ],
+      "themes": [
+        "AI & AUTOMATION -",
+        "ANALYTICS & REPORTING -",
+        "ANALYTICS & REPORTING - ROADMAP REVIEW",
+        "CHANNEL-SPECIFIC ENHANCEMENTS - LinkedIn Suite",
+        "CHANNEL-SPECIFIC ENHANCEMENTS - REVIEW",
+        "CHANNEL-SPECIFIC ENHANCEMENTS - YouTube Features",
+        "COMPLIANCE (DEPRECATED) -",
+        "PUBLISHING & CONTENT MANAGEMENT - Channel-Specific Publishing",
+        "PUBLISHING & CONTENT MANAGEMENT - Core Publishing Capabilities",
+        "USER EXPERIENCE & WORKFLOW -"
+      ],
+      "businessContext": "Enterprise social media management platform for brands and agencies managing global social presence.",
+      "technicalContext": "Cloud-based platform with real-time monitoring, extensive API integration, and enterprise security."
+    }
+  }
+}
