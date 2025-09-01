@@ -157,7 +157,27 @@ export default async function handler(req, res) {
     
     const processingTime = logger.getProcessingTime();
     
+    // Prepare Jira-friendly response format
+    const recommendation = result.analysis?.priority_recommendation || 'On Hold';
+    const importance = result.analysis?.scores?.overall_priority ?? 0;
+    const classification = classifyBugOrFeature(data.issue);
+    const themes = result.theme ? [result.theme] : [];
+    const similarity_group = generateSimilarityGroup(result.analysis, result.theme);
+    const confidence = result.analysis ? 0.75 : 0.0;
+    const notes = result.analysis?.executive_summary || '';
+
     return res.status(200).json({
+      // Top-level fields for Jira Automation (easy mapping):
+      recommendation,                     // "Fast Track" | "Standard" | "On Hold" | "Low"
+      classification,                     // "Feature" | "Bug"
+      themes,                             // ["Analytics & Reporting - Core Analytics"]
+      similarity_group,                   // "SIM-042"
+      duplicate_keys: [],                 // [] for now, or fill from your own logic
+      importance,                         // 0–100
+      confidence,                         // 0.0-1.0
+      notes,                              // Executive summary for Jira
+
+      // Keep your original metadata (optional):
       status: 'success',
       requestId: logger.requestId,
       issueKey: issueKey,
@@ -829,7 +849,7 @@ function getProductDetails(productName, issue) {
           "Multi-product ecosystem with unified data",
           "Extensive customization and integration options"
         ],
-        relevantFeatures: [],
+        relevantFeatures: ["Core platform features and capabilities"],
         businessContext: "Enterprise B2B SaaS platform serving Fortune 500 companies and major brands.",
         technicalContext: "Modern cloud architecture with AI capabilities and enterprise security."
       };
@@ -1114,10 +1134,10 @@ Do not include any other text, explanations, or formatting. Just the theme name.
     // Try Gemini first for theme classification
     if (genAI) {
       try {
-        const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+        const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
         const result = await model.generateContent(prompt);
         const theme = result.response.text().trim();
-        modelUsed = 'Gemini Flash 1.5';
+        modelUsed = 'Gemini Flash 2.0';
         logger.logAction('THEME_CLASSIFICATION_SUCCESS', { theme: theme, model: modelUsed });
         return { theme, modelUsed };
       } catch (geminiError) {
@@ -1155,31 +1175,42 @@ Do not include any other text, explanations, or formatting. Just the theme name.
 
 // Agent 2: Priority Analyzer (Product-Aware with Structured Effort)
 async function analyzePriority(issue, logger) {
-  // Get structured effort estimation
-  const effortEstimation = estimateEffort(issue, logger);
-  
-  // Get dynamic product context
-  const productContext = getProductContext(issue);
-  
-  const prompt = `You are a Khoros Product Priority Specialist. Your job is to analyze feature requests and bugs to determine their development priority based on business impact and implementation effort.
+  try {
+    // Get structured effort estimation
+    const effortEstimation = estimateEffort(issue, logger);
+    
+    // Get dynamic product context
+    const productContext = getProductContext(issue);
+    
+    // Validate product context
+    if (!productContext.context) {
+      logger.logAction('PRODUCT_CONTEXT_ERROR', { 
+        error: 'Product context is missing',
+        product: productContext.product,
+        confidence: productContext.confidence
+      });
+      return { analysis: null, modelUsed: "Error - Product context missing" };
+    }
+    
+    const prompt = `You are a Khoros Product Priority Specialist. Your job is to analyze feature requests and bugs to determine their development priority based on business impact and implementation effort.
 
 PRODUCT CONTEXT:
 ===============
 Detected Product: ${productContext.product} (Confidence: ${productContext.confidence})
 
-${productContext.context.overview}
+${productContext.context.overview || 'Product overview not available'}
 
 Core Product Pillars:
-${productContext.context.corePillars.map(pillar => `- ${pillar}`).join('\n')}
+${(productContext.context.corePillars || []).map(pillar => `- ${pillar}`).join('\n')}
 
 Key Capabilities:
-${productContext.context.keyCapabilities.map(capability => `- ${capability}`).join('\n')}
+${(productContext.context.keyCapabilities || []).map(capability => `- ${capability}`).join('\n')}
 
 Relevant Features for This Request:
-${productContext.context.relevantFeatures.map(feature => `- ${feature}`).join('\n')}
+${(productContext.context.relevantFeatures || []).map(feature => `- ${feature}`).join('\n')}
 
-Business Context: ${productContext.context.businessContext}
-Technical Context: ${productContext.context.technicalContext}
+Business Context: ${productContext.context.businessContext || 'Business context not available'}
+Technical Context: ${productContext.context.technicalContext || 'Technical context not available'}
 
 TICKET DETAILS:
 ===============
@@ -1280,18 +1311,23 @@ REQUIRED OUTPUT FORMAT (JSON):
   }
 }`;
 
-  let modelUsed = null;
-  
-  try {
+    logger.logAction('PRIORITY_PROMPT_BUILT', { 
+      promptLength: prompt.length,
+      productContext: productContext.product,
+      effortEstimation: effortEstimation.effort_size
+    });
+
+    let modelUsed = null;
+    
     // Try Gemini first
     if (genAI) {
       try {
-        const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+        const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
         const result = await model.generateContent(prompt);
         const text = result.response.text();
         const parsed = parseAIResponse(text);
         if (parsed && parsed.scores) {
-          modelUsed = 'Gemini Flash 1.5';
+          modelUsed = 'Gemini Flash 2.0';
           logger.logAction('PRIORITY_ANALYSIS_SUCCESS', { 
             recommendation: parsed.priority_recommendation,
             score: parsed.scores.overall_priority,
@@ -1335,8 +1371,74 @@ REQUIRED OUTPUT FORMAT (JSON):
     
   } catch (error) {
     logger.logAction('PRIORITY_ANALYSIS_ERROR', { error: error.toString() });
-    return { analysis: null, modelUsed: "None - Error occurred" };
+    return { analysis: null, modelUsed: "Error occurred" };
   }
+}
+
+// Helper function to classify if it's a bug or feature
+function classifyBugOrFeature(issueData) {
+  const summary = (issueData?.fields?.summary || '').toLowerCase();
+  const description = (issueData?.fields?.description || '').toLowerCase();
+  const labels = (issueData?.fields?.labels || []).map(l => l.toLowerCase());
+  
+  // Bug indicators
+  const bugKeywords = ['bug', 'fix', 'error', 'broken', 'issue', 'problem', 'crash', 'fail', 'not working', 'broken'];
+  const bugPatterns = ['fix.*', 'broken.*', 'not.*working', 'error.*', 'bug.*'];
+  
+  // Feature indicators
+  const featureKeywords = ['add', 'new', 'implement', 'create', 'build', 'enhance', 'improve', 'upgrade', 'feature'];
+  const featurePatterns = ['add.*', 'new.*', 'implement.*', 'create.*', 'build.*'];
+  
+  let bugScore = 0;
+  let featureScore = 0;
+  
+  // Check keywords
+  bugKeywords.forEach(keyword => {
+    if (summary.includes(keyword) || description.includes(keyword)) bugScore += 2;
+  });
+  
+  featureKeywords.forEach(keyword => {
+    if (summary.includes(keyword) || description.includes(keyword)) featureScore += 2;
+  });
+  
+  // Check patterns
+  bugPatterns.forEach(pattern => {
+    const regex = new RegExp(pattern, 'i');
+    if (regex.test(summary) || regex.test(description)) bugScore += 1;
+  });
+  
+  featurePatterns.forEach(pattern => {
+    const regex = new RegExp(pattern, 'i');
+    if (regex.test(summary) || regex.test(description)) featureScore += 1;
+  });
+  
+  // Check labels
+  if (labels.includes('bug') || labels.includes('defect')) bugScore += 3;
+  if (labels.includes('enhancement') || labels.includes('feature')) featureScore += 3;
+  
+  // Determine classification
+  if (bugScore > featureScore) {
+    return 'Bug';
+  } else if (featureScore > bugScore) {
+    return 'Feature';
+  } else {
+    return 'Feature'; // Default to feature if unclear
+  }
+}
+
+// Helper function to generate similarity group ID
+function generateSimilarityGroup(analysis, theme) {
+  if (!analysis?.similar_features) return null;
+  
+  // Create a simple hash-based ID from theme and similar features
+  const base = theme || 'unknown';
+  const similar = analysis.similar_features.substring(0, 20);
+  const hash = (base + similar).split('').reduce((a, b) => {
+    a = ((a << 5) - a + b.charCodeAt(0)) & 0xFFFFFFFF;
+    return a;
+  }, 0);
+  
+  return `SIM-${Math.abs(hash).toString().padStart(3, '0')}`;
 }
 
 // Health check endpoint
